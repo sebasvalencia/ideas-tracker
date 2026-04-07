@@ -1,10 +1,14 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, Text, SmallInteger, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.adapters.outbound.persistence.sqlalchemy.base import Base
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
 
 
 class Idea(Base):
@@ -20,8 +24,8 @@ class Idea(Base):
     status_id: Mapped[int] = mapped_column(ForeignKey("idea_statuses.id"), nullable=False)
     status: Mapped["IdeaStatus"] = relationship(back_populates="ideas")
     execution_percentage: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0.00"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     logs: Mapped[list["IdeaProgressLog"]] = relationship(back_populates="idea", cascade="all, delete-orphan")
@@ -51,7 +55,7 @@ class IdeaProgressLog(Base):
     comment: Mapped[str] = mapped_column(Text, nullable=False)
     progress_snapshot: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
     status_snapshot: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     idea: Mapped[Idea] = relationship(back_populates="logs")
 
@@ -66,6 +70,6 @@ class IdeaRating(Base):
     idea_id: Mapped[int] = mapped_column(ForeignKey("ideas.id", ondelete="CASCADE"), unique=True, nullable=False)
     rating: Mapped[int] = mapped_column(nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     idea: Mapped[Idea] = relationship(back_populates="rating")

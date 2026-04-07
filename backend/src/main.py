@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
 from src.app.adapters.inbound.rest.routers.auth_router import router as auth_router
 from src.app.adapters.inbound.rest.routers.ideas_router import router as ideas_router
+from src.app.adapters.inbound.rest.routers.logs_router import router as logs_router
+from src.app.adapters.inbound.rest.routers.ratings_router import router as ratings_router
 from slowapi.middleware import SlowAPIMiddleware
 from src.app.adapters.inbound.rest.rate_limiter import limiter
 
@@ -10,6 +12,8 @@ app.add_middleware(SlowAPIMiddleware)
 
 
 app.include_router(ideas_router)
+app.include_router(logs_router)
+app.include_router(ratings_router)
 app.include_router(auth_router)
 
 @app.middleware("http")

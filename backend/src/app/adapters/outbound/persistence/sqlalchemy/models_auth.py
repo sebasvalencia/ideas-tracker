@@ -1,9 +1,14 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.adapters.outbound.persistence.sqlalchemy.base import Base
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
 
 class UserRole(Base):
     __tablename__ = "user_roles"
@@ -18,7 +23,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     roles: Mapped[list["Role"]] = relationship(
         secondary="user_roles",

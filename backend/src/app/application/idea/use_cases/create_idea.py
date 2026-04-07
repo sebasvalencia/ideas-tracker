@@ -1,4 +1,5 @@
 from src.app.application.idea.dto import CreateIdeaInput, CreateIdeaOutput
+from src.app.application.idea.errors import DomainValidationError
 from src.app.application.idea.ports import AuthContextPort, IdeaRepositoryPort
 
 class CreateIdeaUseCase:
@@ -8,9 +9,9 @@ class CreateIdeaUseCase:
     
     def execute(self, data: CreateIdeaInput) -> CreateIdeaOutput:
         if not data.title.strip():
-            raise ValueError("title must not be empty")
+            raise DomainValidationError("title must not be empty")
         if not data.description.strip():
-            raise ValueError("description must not be empty")
+            raise DomainValidationError("description must not be empty")
         
         user = self._auth_ctx.current_user()
         created = self._repository.create(
