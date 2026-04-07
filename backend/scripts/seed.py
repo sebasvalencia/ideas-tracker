@@ -61,7 +61,7 @@ def main() -> None:
                 db.add(Role(name=role_name))
         db.flush()
 
-        admin_email = "admin@ideas.local"
+        admin_email = "admin@ideas.com"
         admin = db.scalar(select(User).where(User.email == admin_email))
         if not admin:
             db.add(

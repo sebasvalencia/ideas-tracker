@@ -1,0 +1,12 @@
+{
+  "venvPath": "backend",
+  "venv": ".venv",
+  "include": ["backend/src", "backend/tests", "backend/scripts"],
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "extraPaths": ["backend"]
+    }
+  ],
+  "typeCheckingMode": "basic"
+}

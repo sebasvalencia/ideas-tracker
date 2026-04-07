@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from src.app.application.idea.dto import CreateIdeaInput
@@ -17,4 +17,4 @@ def create_idea(payload: CreateIdeaRequest):
         result = use_case.execute(CreateIdeaInput(title=payload.title, description=payload.description))
         return result.__dict__
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
