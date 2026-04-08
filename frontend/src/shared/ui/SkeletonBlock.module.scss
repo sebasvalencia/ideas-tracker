@@ -1,0 +1,37 @@
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: #e4e4e7;
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: shimmer 1.2s infinite;
+  content: "";
+}
+
+.sm {
+  height: 0.75rem;
+}
+
+.md {
+  height: 1rem;
+}
+
+.lg {
+  height: 1.5rem;
+}
+
+.xl {
+  height: 2.5rem;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

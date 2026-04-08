@@ -1,0 +1,24 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+}
+
+.idea {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.inProgress {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+.completed {
+  background-color: #ecfdf3;
+  color: #15803d;
+}
