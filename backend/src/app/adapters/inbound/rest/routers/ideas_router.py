@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from src.app.adapters.inbound.rest.auth_dependencies import get_current_user
+from src.app.adapters.outbound.observability.business_metrics import record_idea_completed, record_idea_created
 from src.app.application.idea.dto import CreateIdeaInput, ListIdeasInput, UpdateIdeaInput
 from src.app.application.idea.errors import DomainValidationError, ForbiddenError, NotFoundError
 from src.app.bootstrap.container import (
@@ -31,6 +32,7 @@ def create_idea(payload: CreateIdeaRequest, user: dict = Depends(get_current_use
     use_case = get_create_idea_use_case_for_claims(user)
     try:
         result = use_case.execute(CreateIdeaInput(title=payload.title, description=payload.description))
+        record_idea_created()
         return result.__dict__
     except DomainValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
@@ -62,8 +64,10 @@ def get_idea_detail(idea_id: int, user: dict = Depends(get_current_user)):
 
 @router.patch("/{idea_id}", status_code=200)
 def update_idea(idea_id: int, payload: UpdateIdeaRequest, user: dict = Depends(get_current_user)):
+    detail_use_case = get_idea_detail_use_case_for_claims(user)
     use_case = get_update_idea_use_case_for_claims(user)
     try:
+        current = detail_use_case.execute(idea_id=idea_id)
         result = use_case.execute(
             idea_id=idea_id,
             patch=UpdateIdeaInput(
@@ -73,6 +77,8 @@ def update_idea(idea_id: int, payload: UpdateIdeaRequest, user: dict = Depends(g
                 execution_percentage=payload.execution_percentage,
             ),
         )
+        if current.status != "completed" and result.status == "completed":
+            record_idea_completed(created_at=current.created_at, completed_at=result.updated_at)
         return result.__dict__
     except NotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

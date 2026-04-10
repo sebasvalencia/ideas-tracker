@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from src.app.adapters.inbound.rest.auth_dependencies import get_current_user
+from src.app.adapters.outbound.observability.business_metrics import record_rating_created, record_rating_updated
 from src.app.application.idea.dto import RateIdeaInput
 from src.app.application.idea.errors import DomainValidationError, ForbiddenError, NotFoundError
 from src.app.bootstrap.container import (
@@ -26,6 +27,7 @@ def rate_idea(idea_id: int, payload: RateIdeaRequest, user: dict = Depends(get_c
             idea_id=idea_id,
             data=RateIdeaInput(rating=payload.rating, summary=payload.summary),
         )
+        record_rating_created(idea_id=idea_id, value=payload.rating)
         return result.__dict__
     except NotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
@@ -37,12 +39,15 @@ def rate_idea(idea_id: int, payload: RateIdeaRequest, user: dict = Depends(get_c
 
 @router.patch("/{idea_id}/rating", status_code=200)
 def update_idea_rating(idea_id: int, payload: RateIdeaRequest, user: dict = Depends(get_current_user)):
+    read_use_case = get_idea_rating_use_case_for_claims(user)
     use_case = get_update_idea_rating_use_case_for_claims(user)
     try:
+        read_use_case.execute(idea_id=idea_id)
         result = use_case.execute(
             idea_id=idea_id,
             data=RateIdeaInput(rating=payload.rating, summary=payload.summary),
         )
+        record_rating_updated(idea_id=idea_id, value=payload.rating)
         return result.__dict__
     except NotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

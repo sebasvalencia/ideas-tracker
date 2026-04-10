@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_EXPIRE_MINUTES: int = 10080
     AUTH_RATE_LIMIT_LOGIN: str = "5/minute"
+    OTEL_ENABLED: bool = False
+    OTEL_SERVICE_NAME: str = "ideas-api"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4318/v1/traces"
+    METRICS_ENABLED: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",
