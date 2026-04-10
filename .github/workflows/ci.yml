@@ -2,7 +2,9 @@ name: ci
 
 on:
   push:
+    branches: [main, master]
   pull_request:
+    branches: [main, master]
 
 jobs:
   backend-quality:
@@ -31,6 +33,9 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: uv sync
+      - name: Run Ruff
+        working-directory: backend
+        run: uv run ruff check src tests
       - name: Run backend unit + bdd with coverage gate
         working-directory: backend
         env:
@@ -40,7 +45,19 @@ jobs:
           JWT_EXPIRE_MINUTES: "30"
           JWT_REFRESH_EXPIRE_MINUTES: "10080"
           AUTH_RATE_LIMIT_LOGIN: 5/minute
-        run: uv run pytest tests/unit tests/bdd --cov=src --cov-fail-under=80
+        run: >
+          uv run pytest tests/unit tests/bdd
+          --cov=src --cov-fail-under=80
+          --cov-report=xml --cov-report=html --cov-report=term-missing
+      - name: Upload backend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          if-no-files-found: warn
+          path: |
+            backend/coverage.xml
+            backend/htmlcov/
 
   frontend-unit:
     runs-on: ubuntu-latest
@@ -52,9 +69,19 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
-      - name: Run frontend unit tests
+      - name: Run frontend lint
         working-directory: frontend
-        run: npm test
+        run: npm run lint
+      - name: Run frontend unit tests with coverage
+        working-directory: frontend
+        run: npm run test:coverage
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          if-no-files-found: warn
+          path: frontend/coverage/
 
   frontend-e2e-smoke:
     runs-on: ubuntu-latest

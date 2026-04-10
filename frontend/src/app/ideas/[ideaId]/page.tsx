@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 
 import styles from "@/app/ideas/[ideaId]/page.module.scss";
 import { ExecutionProgressBar } from "@/modules/ideas/components/ExecutionProgressBar";
@@ -15,6 +15,8 @@ import { IdeaRatingForm } from "@/modules/ratings/components/IdeaRatingForm";
 import { IdeaRatingSummary } from "@/modules/ratings/components/IdeaRatingSummary";
 import { useIdeaRating } from "@/modules/ratings/hooks/useIdeaRating";
 import { clearAccessToken, getAccessToken } from "@/modules/auth/services/tokenSession";
+
+const tokenStoreSubscribe = () => () => {};
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { SkeletonBlock } from "@/shared/ui/SkeletonBlock";
 
@@ -24,7 +26,11 @@ export default function IdeaDetailPage() {
   const router = useRouter();
   const params = useParams<{ ideaId: string }>();
   const ideaId = Number(params.ideaId);
-  const [token, setToken] = useState<string | null>(null);
+  const token = useSyncExternalStore(
+    tokenStoreSubscribe,
+    () => getAccessToken(),
+    () => null,
+  );
   const { idea, loading, error, refresh } = useIdeaDetail(token, Number.isFinite(ideaId) ? ideaId : null);
   const { patchIdea, loading: patchLoading, deleting, removeIdea, error: patchError, clearError } = useIdeaMutations(
     token,
@@ -51,10 +57,6 @@ export default function IdeaDetailPage() {
     error: ratingError,
     save: saveRating,
   } = useIdeaRating(token, Number.isFinite(ideaId) ? ideaId : null, isCompleted);
-
-  useEffect(() => {
-    setToken(getAccessToken());
-  }, []);
 
   const combinedError = useMemo(
     () => localValidation ?? patchError ?? logsError ?? ratingError ?? error,
