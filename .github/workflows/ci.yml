@@ -212,7 +212,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [publish-images]
-    if: github.event_name == 'push'
+    # Runs only on push AND when DEPLOY_HOST is configured.
+    # Skip silently until the server secrets are set up.
+    if: github.event_name == 'push' && secrets.DEPLOY_HOST != ''
     environment: production
     steps:
       - name: Deploy via SSH
