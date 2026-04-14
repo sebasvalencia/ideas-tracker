@@ -225,10 +225,11 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
 
-            # Actualizar imágenes
+            # Actualizar imágenes publicadas por publish-images
             docker compose pull
 
-            # Migrar schema + datos de catálogo (idempotente, nunca toca usuarios)
+            # Migrar schema + datos de catálogo (idempotente, NUNCA toca usuarios)
+            # seed_dev.py NO corre aquí porque APP_ENV=production lo rechaza
             docker compose run --rm backend uv run alembic upgrade head
 
             # Reiniciar servicios con las nuevas imágenes
@@ -236,3 +237,15 @@ jobs:
 
             # Limpiar imágenes antiguas
             docker image prune -f
+
+            # ── PRIMER DEPLOY ÚNICAMENTE ──────────────────────────────────────
+            # Después de hacer el primer deploy, crea el admin con:
+            #
+            #   docker compose exec backend uv run python scripts/manage_user.py \
+            #     create-admin --email tu@email.com --password 'TuPasswordSeguro!'
+            #
+            # Para cambiar la contraseña después:
+            #
+            #   docker compose exec backend uv run python scripts/manage_user.py \
+            #     reset-password --email tu@email.com --password 'NuevoPassword!'
+            # ─────────────────────────────────────────────────────────────────
