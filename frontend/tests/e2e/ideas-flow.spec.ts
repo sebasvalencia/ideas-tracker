@@ -11,6 +11,8 @@ test("login, create idea, update, add log and rate", async ({ page }) => {
   await page.getByLabel("Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
 
+  // Argon2 + JWT + Next.js navigation can take several seconds in CI — wait for URL first.
+  await page.waitForURL("**/ideas", { timeout: 15_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Ideas", exact: true })).toBeVisible();
 
   await page.getByPlaceholder("Idea title").fill(uniqueTitle);
