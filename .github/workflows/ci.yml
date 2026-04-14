@@ -145,6 +145,9 @@ jobs:
           docker compose logs
           exit 1
 
+      - name: Seed database
+        run: docker compose exec backend uv run python scripts/seed.py
+
       - name: Run E2E smoke
         working-directory: frontend
         env:
