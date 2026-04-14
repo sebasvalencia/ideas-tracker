@@ -146,7 +146,7 @@ jobs:
           exit 1
 
       - name: Seed database
-        run: docker compose exec backend uv run python scripts/seed.py
+        run: docker compose exec backend uv run python scripts/seed_dev.py
 
       - name: Run E2E smoke
         working-directory: frontend
@@ -201,3 +201,38 @@ jobs:
             ghcr.io/${{ github.repository }}/ideas-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ── Deploy a producción (solo push a main tras publicar imágenes) ──────────
+  # Configurar los siguientes secrets en GitHub → Settings → Secrets:
+  #   DEPLOY_HOST      IP o hostname del servidor
+  #   DEPLOY_USER      Usuario SSH (ej: ubuntu, deploy)
+  #   DEPLOY_SSH_KEY   Clave privada SSH (sin passphrase)
+  #   DEPLOY_PATH      Ruta en el servidor (ej: /opt/ideas-tracker)
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [publish-images]
+    if: github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Actualizar imágenes
+            docker compose pull
+
+            # Migrar schema + datos de catálogo (idempotente, nunca toca usuarios)
+            docker compose run --rm backend uv run alembic upgrade head
+
+            # Reiniciar servicios con las nuevas imágenes
+            docker compose --profile app up -d --remove-orphans
+
+            # Limpiar imágenes antiguas
+            docker image prune -f

@@ -56,6 +56,7 @@ services:
       METRICS_ENABLED: ${METRICS_ENABLED:-true}
     command: >
       sh -c "uv run alembic upgrade head &&
+             uv run python scripts/seed_dev.py &&
              uv run uvicorn src.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"

@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from scripts.seed import main as seed_main
+from scripts.seed_dev import main as seed_main
 from src.app.adapters.outbound.persistence.sqlalchemy.session import SessionLocal
 from src.main import app
 
