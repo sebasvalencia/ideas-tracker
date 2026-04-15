@@ -214,10 +214,21 @@ jobs:
     needs: [publish-images]
     # Runs only on push AND when DEPLOY_HOST is configured.
     # Skip silently until the server secrets are set up.
-    if: github.event_name == 'push' && secrets.DEPLOY_HOST != ''
+    if: github.event_name == 'push'
     environment: production
     steps:
+      - name: Check deploy secrets
+        id: check-secrets
+        run: |
+          if [ -n "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::notice::DEPLOY_HOST secret not configured – skipping deploy."
+          fi
+
       - name: Deploy via SSH
+        if: steps.check-secrets.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
