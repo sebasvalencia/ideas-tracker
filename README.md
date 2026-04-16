@@ -269,43 +269,6 @@ frontend-unit ────┘
 | `publish-images` | builds and pushes to `ghcr.io` (only on push to main) |
 | `deploy` | SSH deploy to production server (requires secrets configured) |
 
-### Published images
-
-After a successful pipeline, images are available at:
-
-```
-ghcr.io/<your-user>/<repo>/ideas-api:latest
-ghcr.io/<your-user>/<repo>/ideas-web:latest
-```
-
-Each commit also generates a SHA-tagged image for precise rollbacks.
-
-### Enabling production deploy
-
-Configure these secrets in **GitHub → Settings → Secrets and variables → Actions**:
-
-| Secret | Description |
-|--------|-------------|
-| `DEPLOY_HOST` | Server IP or hostname |
-| `DEPLOY_USER` | SSH user (e.g. `ubuntu`) |
-| `DEPLOY_SSH_KEY` | Private SSH key (no passphrase) |
-| `DEPLOY_PATH` | Path on server (e.g. `/opt/ideas-tracker`) |
-
-Until these are configured, the deploy job is silently skipped.
-
----
-
-## Deployment options
-
-| Scenario | Stack | Notes |
-|----------|-------|-------|
-| Local development | Docker Compose | `--profile app up -d --build` |
-| Cloud (simple) | Vercel + Render/Fly.io + Neon | Frontend on Vercel, API on container platform |
-| Cloud (scalable) | Vercel + Kubernetes | Manifests in `docs/solucion-fase-9-kubernetes-hardening.md` |
-| VPS own server | Docker Compose via SSH | Configure GitHub deploy secrets |
-
-See [`docs/guia-opciones-despliegue.md`](docs/guia-opciones-despliegue.md) and [`docs/despliegue-produccion-vercel-cloudflare.md`](docs/despliegue-produccion-vercel-cloudflare.md) for detailed guides.
-
 ---
 
 ## Project structure
@@ -336,19 +299,6 @@ ideas-tracker/
 ├── docker-compose.yml        # App profiles: db, app
 └── docker-compose.observability.yml  # Observability stack
 ```
-
----
-
-## Documentation
-
-| Doc | Description |
-|-----|-------------|
-| [`docs/README-docker.md`](docs/README-docker.md) | Docker Compose quickstart and profile reference |
-| [`docs/guia-opciones-despliegue.md`](docs/guia-opciones-despliegue.md) | Deployment options: local, Vercel, k8s |
-| [`docs/despliegue-produccion-vercel-cloudflare.md`](docs/despliegue-produccion-vercel-cloudflare.md) | Production architecture with Vercel/Cloudflare |
-| [`docs/solucion-fase-9-kubernetes-hardening.md`](docs/solucion-fase-9-kubernetes-hardening.md) | Kubernetes manifests, HPA, TLS, rollback |
-| [`docs/architecture/`](docs/architecture/) | C4 diagrams: context, containers, components |
-| [`docs/runbooks/`](docs/runbooks/) | Operational runbooks (e.g. API high error rate) |
 
 ---
 
