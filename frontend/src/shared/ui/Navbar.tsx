@@ -9,12 +9,8 @@ import styles from "@/shared/ui/Navbar.module.scss";
 export function Navbar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
+  const [email] = useState<string | null>(() => getTokenEmail());
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setEmail(getTokenEmail());
-  }, []);
 
   useEffect(() => {
     if (!open) return;

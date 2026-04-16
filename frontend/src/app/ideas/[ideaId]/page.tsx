@@ -56,7 +56,9 @@ export default function IdeaDetailPage() {
   const [draftStatus, setDraftStatus] = useState<IdeaStatus | null>(null);
   const [draftProgress, setDraftProgress] = useState<number | null>(null);
   const [localValidation, setLocalValidation] = useState<string | null>(null);
-  const [logsOpen, setLogsOpen] = useState(false);
+  const autoLogsOpen = !logsLoading && logs.length > 0;
+  const [logsOpenExplicit, setLogsOpenExplicit] = useState<boolean | null>(null);
+  const logsOpen = logsOpenExplicit !== null ? logsOpenExplicit : autoLogsOpen;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const status = draftStatus ?? ((idea?.status as IdeaStatus | undefined) ?? "idea");
@@ -75,12 +77,6 @@ export default function IdeaDetailPage() {
     () => localValidation ?? patchError ?? logsError ?? ratingError ?? error,
     [error, localValidation, logsError, patchError, ratingError],
   );
-
-  useEffect(() => {
-    if (!logsLoading && logs.length > 0) {
-      setLogsOpen(true);
-    }
-  }, [logsLoading, logs.length]);
 
   useEffect(() => {
     if (!showDeleteConfirm) return;
@@ -279,7 +275,12 @@ export default function IdeaDetailPage() {
             <button
               aria-expanded={logsOpen}
               className={styles.sectionToggle}
-              onClick={() => setLogsOpen((prev) => !prev)}
+              onClick={() =>
+                setLogsOpenExplicit((prev) => {
+                  const current = prev ?? autoLogsOpen;
+                  return !current;
+                })
+              }
               type="button"
             >
               <span className={styles.sectionTitle}>Progress logs</span>
