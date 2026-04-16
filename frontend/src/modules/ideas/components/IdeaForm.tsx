@@ -6,9 +6,10 @@ import styles from "@/modules/ideas/components/IdeaForm.module.scss";
 type IdeaFormProps = {
   loading: boolean;
   onSubmit: (title: string, description: string) => Promise<void>;
+  onCancel?: () => void;
 };
 
-export function IdeaForm({ loading, onSubmit }: IdeaFormProps) {
+export function IdeaForm({ loading, onSubmit, onCancel }: IdeaFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,15 +23,12 @@ export function IdeaForm({ loading, onSubmit }: IdeaFormProps) {
           setError("Title and description are required");
           return;
         }
-
         setError(null);
         await onSubmit(title.trim(), description.trim());
         setTitle("");
         setDescription("");
       }}
     >
-      <h2 className={styles.title}>Create idea</h2>
-
       <input
         className={styles.input}
         onChange={(event) => setTitle(event.target.value)}
@@ -47,13 +45,21 @@ export function IdeaForm({ loading, onSubmit }: IdeaFormProps) {
 
       {error && <p className={styles.error}>{error}</p>}
 
-      <button
-        className={styles.button}
-        disabled={loading}
-        type="submit"
-      >
-        {loading ? "Creating..." : "Create"}
-      </button>
+      <div className={styles.formActions}>
+        {onCancel && (
+          <button
+            className={styles.cancelButton}
+            disabled={loading}
+            onClick={onCancel}
+            type="button"
+          >
+            Cancel
+          </button>
+        )}
+        <button className={styles.button} disabled={loading} type="submit">
+          {loading ? "Creating..." : "Create idea"}
+        </button>
+      </div>
     </form>
   );
 }

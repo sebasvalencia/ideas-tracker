@@ -11,24 +11,20 @@
   color: #52525b;
 }
 
+.percent {
+  font-weight: 600;
+}
+
 .track {
   height: 0.5rem;
   width: 100%;
-  appearance: none;
   overflow: hidden;
-  border: 0;
   border-radius: 9999px;
   background-color: #e4e4e7;
 }
 
-.track::-webkit-progress-bar {
-  background-color: #e4e4e7;
-}
-
-.track::-webkit-progress-value {
-  background-color: #4f46e5;
-}
-
-.track::-moz-progress-bar {
-  background-color: #4f46e5;
+.fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 400ms ease, background-color 300ms ease;
 }

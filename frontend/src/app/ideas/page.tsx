@@ -1,11 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { IdeaCard } from "@/modules/ideas/components/IdeaCard";
 import { IdeaForm } from "@/modules/ideas/components/IdeaForm";
-import { clearAccessToken, getAccessToken } from "@/modules/auth/services/tokenSession";
+import { getAccessToken } from "@/modules/auth/services/tokenSession";
 import { useIdeasList } from "@/modules/ideas/hooks/useIdeasList";
 import type { Idea } from "@/modules/ideas/model/idea.types";
 import { createIdea, deleteIdea } from "@/modules/ideas/services/ideasApi";
@@ -13,45 +12,66 @@ import styles from "@/app/ideas/page.module.scss";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { SkeletonBlock } from "@/shared/ui/SkeletonBlock";
 
+const PAGE_SIZE = 9;
+
 export default function IdeasPage() {
-  const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [deletingIdeaId, setDeletingIdeaId] = useState<number | null>(null);
   const [ideaToDelete, setIdeaToDelete] = useState<Idea | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { ideas, loading, error, refresh } = useIdeasList(token);
-
-  const sortedIdeas = useMemo(() => ideas, [ideas]);
 
   useEffect(() => {
     setToken(getAccessToken());
   }, []);
 
   useEffect(() => {
-    if (!ideaToDelete) {
-      return;
-    }
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && deletingIdeaId === null) {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      if (showCreateModal && !createLoading) {
+        setShowCreateModal(false);
+        return;
+      }
+      if (ideaToDelete && deletingIdeaId === null) {
         setIdeaToDelete(null);
       }
-    };
+    }
     window.addEventListener("keydown", handleEscape);
-    return () => {
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [ideaToDelete, deletingIdeaId]);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [showCreateModal, createLoading, ideaToDelete, deletingIdeaId]);
+
+  const filteredIdeas = useMemo(() => {
+    if (!searchQuery.trim()) return ideas;
+    const q = searchQuery.toLowerCase();
+    return ideas.filter(
+      (idea) =>
+        idea.title.toLowerCase().includes(q) ||
+        idea.description.toLowerCase().includes(q),
+    );
+  }, [ideas, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredIdeas.length / PAGE_SIZE));
+  const paginatedIdeas = filteredIdeas.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   async function handleCreateIdea(title: string, description: string) {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
     setCreateLoading(true);
     setCreateError(null);
     try {
       await createIdea(token, { title, description });
       await refresh();
+      setShowCreateModal(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create idea";
       setCreateError(message);
@@ -60,20 +80,8 @@ export default function IdeasPage() {
     }
   }
 
-  function handleLogout() {
-    clearAccessToken();
-    router.replace("/login");
-  }
-
-  function handleDeleteIdeaRequest(idea: Idea) {
-    setIdeaToDelete(idea);
-    setCreateError(null);
-  }
-
   async function handleConfirmDeleteIdea() {
-    if (!token || !ideaToDelete) {
-      return;
-    }
+    if (!token || !ideaToDelete) return;
     setDeletingIdeaId(ideaToDelete.id);
     setCreateError(null);
     try {
@@ -89,43 +97,99 @@ export default function IdeasPage() {
   }
 
   function handleDeleteIdea(idea: Idea) {
-    if (!token) {
-      return;
-    }
-    handleDeleteIdeaRequest(idea);
+    if (!token) return;
+    setIdeaToDelete(idea);
+    setCreateError(null);
   }
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerTop}>
+      <div className={styles.pageHeader}>
+        <div>
           <h1 className={styles.title}>Ideas</h1>
-          <button className={styles.logoutButton} onClick={handleLogout} type="button">
-            Logout
-          </button>
+          <p className={styles.subtitle}>Track progress, logs and final rating of your projects.</p>
         </div>
-        <p className={styles.subtitle}>Track progress, logs and final rating of your projects.</p>
-      </header>
+        <button
+          className={styles.newIdeaButton}
+          onClick={() => {
+            setCreateError(null);
+            setShowCreateModal(true);
+          }}
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="16"
+            viewBox="0 0 24 24"
+            width="16"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 5v14M5 12h14"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="2"
+            />
+          </svg>
+          New idea
+        </button>
+      </div>
 
-      <section className={styles.formSection}>
-        <h2 className={styles.sectionTitle}>Create new idea</h2>
-        <IdeaForm loading={createLoading} onSubmit={handleCreateIdea} />
-      </section>
+      {!loading && ideas.length > 0 && (
+        <div className={styles.searchRow}>
+          <div className={styles.searchInputWrapper}>
+            <svg
+              aria-hidden="true"
+              className={styles.searchIcon}
+              fill="none"
+              height="15"
+              viewBox="0 0 24 24"
+              width="15"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.75" />
+              <path
+                d="m21 21-4.35-4.35"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="1.75"
+              />
+            </svg>
+            <input
+              className={styles.searchInput}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ideas..."
+              type="search"
+              value={searchQuery}
+            />
+          </div>
+          <span className={styles.resultsCount}>
+            {filteredIdeas.length} {filteredIdeas.length === 1 ? "idea" : "ideas"}
+          </span>
+        </div>
+      )}
+
       {createError && <p className={styles.error}>{createError}</p>}
-
       {error && <p className={styles.error}>{error}</p>}
-      <h2 className={styles.sectionTitle}>Ideas list</h2>
 
-      {!loading && !error && sortedIdeas.length === 0 && (
+      {!loading && !error && ideas.length === 0 && (
         <EmptyState
-          description="Use the form above to register your first idea and start tracking execution."
+          description="Use the button above to register your first idea and start tracking execution."
           title="No ideas yet"
         />
       )}
 
+      {!loading && ideas.length > 0 && filteredIdeas.length === 0 && (
+        <EmptyState
+          description={`No ideas match "${searchQuery}"`}
+          title="No results found"
+        />
+      )}
+
       {loading && (
-        <section className={styles.grid} aria-label="Loading ideas">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <section aria-label="Loading ideas" className={styles.grid}>
+          {Array.from({ length: 6 }).map((_, index) => (
             <article className={styles.skeletonCard} key={`idea-skeleton-${index}`}>
               <SkeletonBlock size="lg" />
               <SkeletonBlock size="sm" />
@@ -136,16 +200,73 @@ export default function IdeasPage() {
         </section>
       )}
 
-      {!loading && <section className={styles.grid}>
-        {sortedIdeas.map((idea) => (
-          <IdeaCard
-            deleting={deletingIdeaId === idea.id}
-            idea={idea}
-            key={idea.id}
-            onDelete={handleDeleteIdea}
-          />
-        ))}
-      </section>}
+      {!loading && paginatedIdeas.length > 0 && (
+        <section className={styles.grid}>
+          {paginatedIdeas.map((idea) => (
+            <IdeaCard
+              deleting={deletingIdeaId === idea.id}
+              idea={idea}
+              key={idea.id}
+              onDelete={handleDeleteIdea}
+            />
+          ))}
+        </section>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageButton}
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+            type="button"
+          >
+            ← Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              className={`${styles.pageButton} ${page === currentPage ? styles.pageButtonActive : ""}`}
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              type="button"
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            className={styles.pageButton}
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+            type="button"
+          >
+            Next →
+          </button>
+        </div>
+      )}
+
+      {showCreateModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !createLoading) {
+              setShowCreateModal(false);
+            }
+          }}
+          role="presentation"
+        >
+          <section aria-modal="true" className={styles.modalCard} role="dialog">
+            <h2 className={styles.modalTitle}>New idea</h2>
+            <p className={styles.modalText}>
+              Fill in the details to add a new idea to your tracker.
+            </p>
+            <IdeaForm
+              loading={createLoading}
+              onCancel={() => setShowCreateModal(false)}
+              onSubmit={handleCreateIdea}
+            />
+          </section>
+        </div>
+      )}
 
       {ideaToDelete && (
         <div
@@ -160,7 +281,8 @@ export default function IdeasPage() {
           <section aria-modal="true" className={styles.modalCard} role="dialog">
             <h3 className={styles.modalTitle}>Delete idea</h3>
             <p className={styles.modalText}>
-              Are you sure you want to delete <strong>{ideaToDelete.title}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{ideaToDelete.title}</strong>? This action
+              cannot be undone.
             </p>
             <div className={styles.modalActions}>
               <button

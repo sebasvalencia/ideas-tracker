@@ -1,6 +1,6 @@
 export const ACCESS_TOKEN_KEY = "ideas_tracker_access_token";
 
-function readTokenPayload(token: string): { exp?: number } | null {
+function readTokenPayload(token: string): { exp?: number; sub?: string; email?: string } | null {
   const parts = token.split(".");
   if (parts.length < 2) {
     return null;
@@ -26,6 +26,13 @@ export function clearAccessToken(): void {
     return;
   }
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+export function getTokenEmail(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = readTokenPayload(token);
+  return payload?.email ?? null;
 }
 
 export function hasValidAccessToken(): boolean {
