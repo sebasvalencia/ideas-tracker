@@ -3,12 +3,19 @@
   "schemaVersion": 39,
   "version": 1,
   "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "panels": [
     {
       "title": "Ideas Created (24h)",
       "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
+          "refId": "A",
           "expr": "sum(increase(ideas_created_total[24h]))"
         }
       ]
@@ -16,8 +23,11 @@
     {
       "title": "Ideas Completed (24h)",
       "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
+          "refId": "A",
           "expr": "sum(increase(ideas_completed_total[24h]))"
         }
       ]
@@ -25,8 +35,11 @@
     {
       "title": "Average Rating",
       "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
+          "refId": "A",
           "expr": "ideas_rating_average"
         }
       ]
@@ -34,8 +47,11 @@
     {
       "title": "Mean Cycle Time (hours)",
       "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
+          "refId": "A",
           "expr": "rate(idea_cycle_time_seconds_sum[24h]) / rate(idea_cycle_time_seconds_count[24h]) / 3600"
         }
       ]
